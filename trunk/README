@@ -1,0 +1,8 @@
+HBase Bridge
+By: Wes Widner <wes@werxltd.com> (c) 2010
+
+Download the latest .jar files for both Hadoop and HBase into the lib/ directory. 
+Be sure to update pom.xml accordingly!
+
+To perform a query simply send a json query in either a GET or POST request. Ex.
+http://localhost:8080/hbasebridge/rpc?debug=true&data={"method":"lookup","params":{"table":"mytable","keys":["mykey1","mykey2"]}}

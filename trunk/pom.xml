@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.werxltd</groupId>
+	<artifactId>hbase</artifactId>
+	<packaging>war</packaging>
+	<version>1.0-SNAPSHOT</version>
+	<name>hbasebridge</name>
+
+    <developers>
+        <developer>
+          <id>wes</id>
+          <name>Wes</name>
+          <email>wes@werxltd.com</email>
+          <url>http://www.facebook.com/weswidner</url>
+          <organization>Werx Limited</organization>
+          <organizationUrl>http://werxltd.com</organizationUrl>
+          <roles>
+            <role>architect</role>
+            <role>developer</role>
+          </roles>
+          <timezone>-5</timezone>
+          <properties>
+            <picUrl>http://bit.ly/6rXWIw</picUrl>
+          </properties>
+        </developer>
+    </developers>
+
+	<repositories>
+		<repository>
+			<id>werxltd</id>
+			<url>http://maven.werxltd.com</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+		</repository>
+	</repositories>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>com.werxltd</groupId>
+			<artifactId>jsonrpc</artifactId>
+			<version>0.9.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-core</artifactId>
+			<version>0.20.1</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/hadoop-0.20.1-core.jar</systemPath>
+		</dependency>
+        <dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-core</artifactId>
+			<version>0.20.1</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/hbase-0.20.1.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.0.4</version>
+		</dependency>
+		<dependency>
+        	<groupId>org.json</groupId>
+        	<artifactId>json</artifactId>
+        	<version>20090211</version>
+   		</dependency>
+	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+		</plugins>
+		<finalName>hbasebridge</finalName>
+	</build>
+</project>
