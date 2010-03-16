@@ -6,12 +6,12 @@
     <display-name>hbase json-rpc query bridge</display-name>
 
     <servlet>
-        <servlet-name>hbase_tape</servlet-name>
+        <servlet-name>hbasebridge</servlet-name>
         <servlet-class>com.werxltd.hbasebridge.HBaseServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>
-        <servlet-name>hbase_tape</servlet-name>
+        <servlet-name>hbasebridge</servlet-name>
         <url-pattern>/api</url-pattern>
     </servlet-mapping>
   
@@ -20,7 +20,7 @@
         <servlet-class>com.werxltd.jsonrpc.RPC</servlet-class>
         <init-param>
             <param-name>rpcclasses</param-name>
-            <param-value>com.werxltd.hbasebridge.HBaseInfo, com.werxltd.hbasebridge.TableLookup</param-value>
+            <param-value>com.werxltd.hbasebridge.HadoopInfo, com.werxltd.hbasebridge.HBaseInfo, com.werxltd.hbasebridge.TableLookup</param-value>
         </init-param>
     </servlet>
 
