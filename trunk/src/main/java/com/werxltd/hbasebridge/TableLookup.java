@@ -6,12 +6,16 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import javax.servlet.ServletException;
+
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.NotServingRegionException;
 import org.apache.hadoop.hbase.client.Get;
@@ -19,7 +23,14 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.RegionOfflineException;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedException;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.RegexStringComparator;
+import org.apache.hadoop.hbase.filter.ValueFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,6 +46,9 @@ public class TableLookup {
 
 	private int numversions = 1;
 
+	private static int MAXSCANRESULTS = 100;
+	private HashMap<String, ResultScanner> scanMap;
+	
 	public TableLookup() throws MasterNotRunningException {
 		LOG.info("TableLookup loaded.");
 		hbconf = new HBaseConfiguration();
@@ -71,9 +85,16 @@ public class TableLookup {
 		if (!params.has("table"))
 			throw new Exception("Unspecified table.");
 		tablename = params.getString("table");
-		if (!params.has("keys"))
-			throw new Exception("Unspecified row keys.");
-		JSONArray rowkeys = params.getJSONArray("keys");
+		if (params.has("keys")) {
+			JSONArray rowkeys = params.getJSONArray("keys");
+			for (int k = 0; k < rowkeys.length(); k++) {
+				result.append("rows", getrow(rowkeys.getString(k)));
+			}
+		} else if (params.has("filter")) {
+			result.put("rows", scanrow(params.getString("filter")));
+		} else {
+			throw new Exception("Unspecified row keys or filter.");
+		}
 
 		for (int k = 0; k < rowkeys.length(); k++) {
 			result.append("rows", getrow(rowkeys.getString(k)));
@@ -212,5 +233,93 @@ public class TableLookup {
 			return new JSONObject();
 		}
 	}
+	
+	private JSONArray scanrow(String filterValue) throws ServletException,
+			Exception {
 
+		String scanId = tablename + ":" + filterValue;
+		if (scanMap == null) {
+			scanMap = new HashMap<String, ResultScanner>();
+		}
+
+		if (hbtable == null) {
+			if (!hbadmin.tableExists(tablename))
+				throw new ServletException("Specified table [" + tablename
+						+ "] does not exist.");
+			hbtable = new HTable(hbconf, tablename);
+		}
+
+		ResultScanner resultscanner = scanMap.get(scanId);
+		if (resultscanner == null) {
+			byte[][] columnsArray = getAllColumns(hbtable);
+
+			Filter filter = new ValueFilter(CompareOp.EQUAL,
+					new RegexStringComparator(filterValue));
+
+			Scan scan = new Scan();
+			scan.addColumns(columnsArray);
+			scan.setFilter(filter);
+
+			resultscanner = hbtable.getScanner(scan);
+
+			scanMap.put(scanId, resultscanner);
+		}
+
+		JSONArray result = new JSONArray();
+
+		Result r = null;
+
+		for (int c = 0; c < MAXSCANRESULTS; c++) {
+			r = resultscanner.next();
+
+			if (r == null) {
+				resultscanner.close();
+				scanMap.remove(scanId);
+				break;
+			}
+
+			JSONObject iresult = new JSONObject();
+
+			String key = Bytes.toString(r.raw()[0].getRow());
+
+			iresult.put(key, scrapeResult(r));
+
+			result.put(iresult);
+		}
+
+		return result;
+	}
+
+	private byte[][] getAllColumns(HTable table) throws IOException {
+		HColumnDescriptor[] cds = table.getTableDescriptor()
+				.getColumnFamilies();
+		byte[][] columns = new byte[cds.length][];
+		for (int i = 0; i < cds.length; i++) {
+			columns[i] = cds[i].getNameWithColon();
+		}
+		return columns;
+	}
+	
+	public JSONObject resetScanner(JSONObject params) throws Exception {
+		JSONObject result = new JSONObject();
+		
+		if(!params.has("key")) {
+			throw new Exception("No scanner key specified");
+		}
+		
+		result.put("status", scanMap.remove(params.getString("key")));
+		
+		return result;
+	}
+	
+	public JSONObject resetScanners() throws JSONException {
+		JSONObject result = new JSONObject();
+		
+
+		result.put("items", scanMap.size());
+		
+		scanMap.clear();
+		
+		return result;
+	}
 }
