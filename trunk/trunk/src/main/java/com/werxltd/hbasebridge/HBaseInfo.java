@@ -24,7 +24,6 @@ public class HBaseInfo {
 
 	private void connect() throws Exception {
 		hbconf = new HBaseConfiguration();
-		hbconf.set("hbase.client.retries.number", "2");
 		
 		hbadmin = new HBaseAdmin(hbconf);
 		HBaseAdmin.checkHBaseAvailable(hbconf);
@@ -97,9 +96,10 @@ public class HBaseInfo {
 		return result;
 	}
 
-	public JSONObject listtables() throws JSONException, IOException {
+	public JSONObject listtables() throws Exception {
 		JSONObject result = new JSONObject();
-
+		
+		connect();
 		HTableDescriptor[] tables = hbadmin.listTables();
 
 		for (int i = 0; i < tables.length; i++) {
