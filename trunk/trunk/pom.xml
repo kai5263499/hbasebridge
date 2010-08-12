@@ -7,24 +7,24 @@
 	<version>1.5-SNAPSHOT</version>
 	<name>hbasebridge</name>
 
-    <developers>
-        <developer>
-          <id>wes</id>
-          <name>Wes</name>
-          <email>wes@werxltd.com</email>
-          <url>http://www.facebook.com/weswidner</url>
-          <organization>Werx Limited</organization>
-          <organizationUrl>http://werxltd.com</organizationUrl>
-          <roles>
-            <role>architect</role>
-            <role>developer</role>
-          </roles>
-          <timezone>-5</timezone>
-          <properties>
-            <picUrl>http://bit.ly/6rXWIw</picUrl>
-          </properties>
-        </developer>
-    </developers>
+	<developers>
+		<developer>
+			<id>wes</id>
+			<name>Wes</name>
+			<email>wes@werxltd.com</email>
+			<url>http://www.facebook.com/weswidner</url>
+			<organization>Werx Limited</organization>
+			<organizationUrl>http://werxltd.com</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>-5</timezone>
+			<properties>
+				<picUrl>http://bit.ly/6rXWIw</picUrl>
+			</properties>
+		</developer>
+	</developers>
 
 	<repositories>
 		<repository>
@@ -53,7 +53,7 @@
 			<scope>system</scope>
 			<systemPath>${project.basedir}/lib/hadoop-0.20.1-core.jar</systemPath>
 		</dependency>
-        <dependency>
+		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase-core</artifactId>
 			<version>0.20.1</version>
@@ -66,10 +66,16 @@
 			<version>1.0.4</version>
 		</dependency>
 		<dependency>
-        	<groupId>org.json</groupId>
-        	<artifactId>json</artifactId>
-        	<version>20090211</version>
-   		</dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20090211</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.4</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

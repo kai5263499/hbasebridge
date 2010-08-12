@@ -1,6 +1,5 @@
 package com.werxltd.hbasebridge;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -11,7 +10,6 @@ import org.apache.hadoop.hbase.HServerLoad;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.HServerLoad.RegionLoad;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 public class HBaseInfo {

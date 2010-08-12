@@ -2,9 +2,6 @@ package com.werxltd.hbasebridge;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,7 +19,6 @@ import org.apache.hadoop.hbase.NotServingRegionException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.RegionOfflineException;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedException;
@@ -98,10 +94,6 @@ public class TableLookup {
 			result.put("rows", scanrow(params.getString("filter")));
 		} else {
 			throw new Exception("Unspecified row keys or filter.");
-		}
-
-		for (int k = 0; k < rowkeys.length(); k++) {
-			result.append("rows", getrow(rowkeys.getString(k)));
 		}
 
 		disconnect();
