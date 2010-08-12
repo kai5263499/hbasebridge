@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -36,6 +37,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.werxltd.jsonrpc.events.JSONRPCMessage;
+import com.werxltd.jsonrpc.events.JSONRPCMessageEvent;
+
 public class TableLookup {
 	protected final static Logger LOG = Logger.getLogger(TableLookup.class);
 
@@ -46,9 +50,9 @@ public class TableLookup {
 
 	private int numversions = 1;
 
-	private static int MAXSCANRESULTS = 100;
+	private int MAXSCANRESULTS = 100;
 	private HashMap<String, ResultScanner> scanMap;
-	
+
 	public TableLookup() throws MasterNotRunningException {
 		LOG.info("TableLookup loaded.");
 		hbconf = new HBaseConfiguration();
@@ -178,8 +182,7 @@ public class TableLookup {
 		return result;
 	}
 
-	private JSONObject handleGenericTableLookup(String rowkey)
-			throws Exception {
+	private JSONObject handleGenericTableLookup(String rowkey) throws Exception {
 		JSONObject result = new JSONObject();
 
 		Get get = null;
@@ -233,16 +236,21 @@ public class TableLookup {
 			return new JSONObject();
 		}
 	}
-	
+
 	private JSONArray scanrow(String filterValue) throws ServletException,
 			Exception {
 
 		String scanId = tablename + ":" + filterValue;
+
+		LOG.info("Looking for scanId: " + scanId);
+
 		if (scanMap == null) {
+			LOG.info("Creating new scanMap");
 			scanMap = new HashMap<String, ResultScanner>();
 		}
 
 		if (hbtable == null) {
+			LOG.info("Connecting to HTable");
 			if (!hbadmin.tableExists(tablename))
 				throw new ServletException("Specified table [" + tablename
 						+ "] does not exist.");
@@ -251,6 +259,8 @@ public class TableLookup {
 
 		ResultScanner resultscanner = scanMap.get(scanId);
 		if (resultscanner == null) {
+			LOG.info("Creating new scanner");
+
 			byte[][] columnsArray = getAllColumns(hbtable);
 
 			Filter filter = new ValueFilter(CompareOp.EQUAL,
@@ -260,6 +270,16 @@ public class TableLookup {
 			scan.addColumns(columnsArray);
 			scan.setFilter(filter);
 
+			if (numversions < 1) {
+				scan.setMaxVersions(scan.getMaxVersions());
+				LOG.info("scan getMaxVersions: " + scan.getMaxVersions());
+			} else if (numversions > 1) {
+				LOG.info("scan numversions: " + numversions);
+				scan.setMaxVersions(numversions);
+			} else {
+				scan.setMaxVersions();
+			}
+
 			resultscanner = hbtable.getScanner(scan);
 
 			scanMap.put(scanId, resultscanner);
@@ -267,12 +287,13 @@ public class TableLookup {
 
 		JSONArray result = new JSONArray();
 
-		Result r = null;
+		LOG.info("resultscanner next(" + MAXSCANRESULTS + ")");
+		Result r[] = resultscanner.next(MAXSCANRESULTS);
 
-		for (int c = 0; c < MAXSCANRESULTS; c++) {
-			r = resultscanner.next();
+		LOG.info("processing " + r.length + " scan results");
 
-			if (r == null) {
+		for (int c = 0; c < r.length; c++) {
+			if (r[c] == null) {
 				resultscanner.close();
 				scanMap.remove(scanId);
 				break;
@@ -280,9 +301,9 @@ public class TableLookup {
 
 			JSONObject iresult = new JSONObject();
 
-			String key = Bytes.toString(r.raw()[0].getRow());
+			String key = Bytes.toString(r[c].raw()[0].getRow());
 
-			iresult.put(key, scrapeResult(r));
+			iresult.put(key, scrapeResult(r[c]));
 
 			result.put(iresult);
 		}
@@ -299,27 +320,37 @@ public class TableLookup {
 		}
 		return columns;
 	}
-	
+
 	public JSONObject resetScanner(JSONObject params) throws Exception {
 		JSONObject result = new JSONObject();
-		
-		if(!params.has("key")) {
+
+		if (!params.has("key")) {
 			throw new Exception("No scanner key specified");
 		}
-		
+
 		result.put("status", scanMap.remove(params.getString("key")));
-		
+
 		return result;
 	}
-	
+
 	public JSONObject resetScanners() throws JSONException {
 		JSONObject result = new JSONObject();
-		
 
 		result.put("items", scanMap.size());
-		
+
 		scanMap.clear();
-		
+
 		return result;
+	}
+
+	public void messageReceived(JSONRPCMessageEvent me) {
+		switch (me.message().getCode()) {
+		case JSONRPCMessage.INIT:
+			ServletConfig config = me.message().getServletConfig();
+			if (config.getInitParameter("maxresults") != null)
+				MAXSCANRESULTS = Integer.parseInt(config
+						.getInitParameter("maxresults"));
+			break;
+		}
 	}
 }
