@@ -1,0 +1,1 @@
+This is a servlet which provides a JSON-RPC bridge to query an HBase instance
